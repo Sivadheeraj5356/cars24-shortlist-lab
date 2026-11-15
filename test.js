@@ -1,0 +1,11 @@
+const {test}=require('node:test');const assert=require('node:assert/strict');const {inventory,shortlist}=require('./app.js');
+test('default shortlist contains exactly eligible listings in mileage order',()=>assert.deepEqual(shortlist(inventory,800000,60000).map(c=>c.id),['s5','s1','s2']));
+test('inclusive budget and mileage boundaries',()=>assert.equal(shortlist(inventory,580000,36000)[0].id,'s1'));
+test('no matches returns empty',()=>assert.deepEqual(shortlist(inventory,1,0),[]));
+test('does not mutate source inventory',()=>{let copy=JSON.stringify(inventory);shortlist(inventory,1000000,100000);assert.equal(JSON.stringify(inventory),copy)});
+test('invalid budget fails clearly',()=>{for(const n of [0,-1,NaN,Infinity])assert.throws(()=>shortlist(inventory,n,1000))});
+test('invalid mileage fails clearly',()=>{for(const n of [-1,NaN,Infinity])assert.throws(()=>shortlist(inventory,1000000,n))});
+test('headroom is exact',()=>assert.equal(shortlist(inventory,800000,60000)[0].headroom,90000));
+test('equal mileage uses price as tie breaker',()=>assert.deepEqual(shortlist([{id:'a',price:20,km:4},{id:'b',price:10,km:4}],30,10).map(x=>x.id),['b','a']));
+test('malformed listing prices excluded',()=>assert.equal(shortlist([{id:'x',price:-1,km:2}],50,5).length,0));
+test('zero km is a valid filter',()=>assert.equal(shortlist([{id:'x',price:1,km:0}],5,0).length,1));
